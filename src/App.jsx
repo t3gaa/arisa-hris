@@ -385,11 +385,14 @@ function App() {
     useState("");
 
   const [employeeForm, setEmployeeForm] = useState({
-    name: "",
-    department: "",
-    position: "",
-    email: "",
-  });
+  name: "",
+  department: "",
+  position: "",
+  email: "",
+  phone: "",
+  employmentType: "Full-time",
+  dateJoined: "",
+});
 
   const [leaveForm, setLeaveForm] = useState({
     employeeId: "",
@@ -553,14 +556,17 @@ function App() {
         console.error("Employees fetch error:", error);
       } else {
         setEmployees(
-          (data || []).map((employee) => ({
-            id: employee.employee_id,
-            name: employee.name,
-            department: employee.department,
-            position: employee.position,
-            email: employee.email,
-          }))
-        );
+  (data || []).map((employee) => ({
+    id: employee.employee_id,
+    name: employee.name,
+    department: employee.department,
+    position: employee.position,
+    email: employee.email,
+    phone: employee.phone,
+    employmentType: employee.employment_type,
+    dateJoined: employee.date_joined,
+  }))
+);
       }
 
       setEmployeesLoading(false);
@@ -1510,10 +1516,9 @@ function App() {
       );
 
     const nextEmployeeNumber =
-      employeeNumbers.length > 0
-        ? Math.max(...employeeNumbers) + 1
-        : 1;
-
+  employeeNumbers.length > 0
+    ? Math.max(...employeeNumbers) + 1
+    : employees.length + 1;
     const newEmployeeId = `TH${String(
       nextEmployeeNumber
     ).padStart(3, "0")}`;
@@ -1524,14 +1529,16 @@ function App() {
     } = await supabase
       .from("employees")
       .insert({
-        employee_id: newEmployeeId,
-        name: employeeForm.name,
-        department:
-          employeeForm.department,
-        position: employeeForm.position,
-        email: employeeForm.email,
-        status: "Active",
-      })
+  employee_id: newEmployeeId,
+  name: employeeForm.name,
+  department: employeeForm.department,
+  position: employeeForm.position,
+  email: employeeForm.email,
+  phone: employeeForm.phone,
+  employment_type: employeeForm.employmentType,
+  date_joined: employeeForm.dateJoined,
+  status: "Active",
+})
       .select("*")
       .single();
 
@@ -1548,13 +1555,16 @@ function App() {
       return;
     }
 
-    const newEmployee = {
-      id: data.employee_id,
-      name: data.name,
-      department: data.department,
-      position: data.position,
-      email: data.email,
-    };
+   const newEmployee = {
+  id: data.employee_id,
+  name: data.name,
+  department: data.department,
+  position: data.position,
+  email: data.email,
+  phone: data.phone,
+  employmentType: data.employment_type,
+  dateJoined: data.date_joined,
+};
 
     setEmployees((current) => [
       ...current,
@@ -1608,12 +1618,14 @@ function App() {
     }
 
     setEmployeeForm({
-      name: "",
-      department: "",
-      position: "",
-      email: "",
-    });
-
+  name: "",
+  department: "",
+  position: "",
+  email: "",
+  phone: "",
+  employmentType: "Full-time",
+  dateJoined: "",
+});
     setShowEmployeeForm(false);
   };
 
@@ -1640,7 +1652,7 @@ function App() {
 
     if (!editingEmployeeId) return;
 
-    const {
+        const {
       data,
       error,
     } = await supabase
@@ -1651,6 +1663,11 @@ function App() {
           employeeForm.department,
         position: employeeForm.position,
         email: employeeForm.email,
+        phone: employeeForm.phone,
+        employment_type:
+          employeeForm.employmentType,
+        date_joined:
+          employeeForm.dateJoined,
       })
       .eq(
         "employee_id",
@@ -1673,21 +1690,22 @@ function App() {
     }
 
     setEmployees((current) =>
-      current.map((employee) =>
-        employee.id ===
-        editingEmployeeId
-          ? {
-              id: data.employee_id,
-              name: data.name,
-              department:
-                data.department,
-              position:
-                data.position,
-              email: data.email,
-            }
-          : employee
-      )
-    );
+  current.map((employee) =>
+    employee.id === editingEmployeeId
+      ? {
+          id: data.employee_id,
+          name: data.name,
+          department: data.department,
+          position: data.position,
+          email: data.email,
+          phone: data.phone,
+          employmentType:
+            data.employment_type,
+          dateJoined: data.date_joined,
+        }
+      : employee
+  )
+);
 
     setEmployeeForm({
       name: "",
@@ -2202,6 +2220,47 @@ function App() {
                 placeholder="employee@arisa.com"
                 required
               />
+
+<FormInput
+  label="Phone Number"
+  value={employeeForm.phone}
+  onChange={(value) =>
+    setEmployeeForm((current) => ({
+      ...current,
+      phone: value,
+    }))
+  }
+  placeholder="e.g. 08031234567"
+/>
+
+<FormSelect
+  label="Employment Type"
+  value={employeeForm.employmentType}
+  onChange={(value) =>
+    setEmployeeForm((current) => ({
+      ...current,
+      employmentType: value,
+    }))
+  }
+  options={[
+    { value: "Full-time", label: "Full-time" },
+    { value: "Part-time", label: "Part-time" },
+    { value: "Contract", label: "Contract" },
+    { value: "Intern", label: "Intern" },
+  ]}
+/>
+
+<FormInput
+  label="Date Joined"
+  type="date"
+  value={employeeForm.dateJoined}
+  onChange={(value) =>
+    setEmployeeForm((current) => ({
+      ...current,
+      dateJoined: value,
+    }))
+  }
+/>
             </div>
 
             <div
@@ -4296,34 +4355,60 @@ function App() {
           }}
         >
           <SectionCard title="Employee Information">
-            <ProfileInfo
-              label="Employee ID"
-              value={
-                selectedEmployee.id
-              }
-            />
+  <ProfileInfo
+    label="Employee ID"
+    value={selectedEmployee.id}
+  />
 
-            <ProfileInfo
-              label="Email"
-              value={
-                selectedEmployee.email
-              }
-            />
+  <ProfileInfo
+    label="Email"
+    value={selectedEmployee.email}
+  />
 
-            <ProfileInfo
-              label="Department"
-              value={
-                selectedEmployee.department
-              }
-            />
+  <ProfileInfo
+    label="Phone Number"
+    value={
+      selectedEmployee.phone ||
+      "Not provided"
+    }
+  />
 
-            <ProfileInfo
-              label="Position"
-              value={
-                selectedEmployee.position
-              }
-            />
-          </SectionCard>
+  <ProfileInfo
+    label="Department"
+    value={selectedEmployee.department}
+  />
+
+  <ProfileInfo
+    label="Position"
+    value={selectedEmployee.position}
+  />
+
+  <ProfileInfo
+    label="Employment Type"
+    value={
+      selectedEmployee.employmentType ||
+      "Not provided"
+    }
+  />
+
+  <ProfileInfo
+    label="Date Joined"
+    value={
+      selectedEmployee.dateJoined
+        ? new Date(
+            selectedEmployee.dateJoined
+          ).toLocaleDateString(
+            "en-NG",
+            {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }
+          )
+        : "Not provided"
+    }
+  />
+</SectionCard>
 
           <SectionCard title="HR Summary">
             <ProfileInfo
@@ -5683,7 +5768,7 @@ function PageTitle({
 function FormInput({
   label,
   type = "text",
-  value,
+  value = "",
   onChange,
   placeholder,
   required = false,
